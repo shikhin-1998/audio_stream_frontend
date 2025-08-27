@@ -189,6 +189,9 @@ const AudioRecorder: React.FC<AudioRecorderProps> = () => {
       clearInterval(bufferIntervalRef.current);
       bufferIntervalRef.current = null;
     }
+    if (ws?.readyState === WebSocket.OPEN) {
+      ws.send("end");
+    }
 
     stopTimer();
 
