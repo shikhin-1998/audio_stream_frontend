@@ -48,7 +48,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = () => {
     if (!ws) return;
     ws.onmessage = (event) => {
       if (event.data) {
-        const data = JSON.parse(event?.data);
+        const data = JSON.parse(event?.data ?? {});
         console.log(data);
       } else {
         console.log(event);
@@ -78,7 +78,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = () => {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
-          sampleRate: 44100,
+          sampleRate: 48000,
         },
       });
 
@@ -155,11 +155,17 @@ const AudioRecorder: React.FC<AudioRecorderProps> = () => {
 
   const simulateWebSocketTranscription = (audioData: Blob) => {
     if (ws?.readyState !== WebSocket.OPEN) {
-      alert("d");
       console.warn("WebSocket is not open. Unable to send audio data.");
       return;
     }
-    ws?.send(audioData);
+    console.log("Sending audio chunk over WebSocket:", audioData);
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (reader.result && ws?.readyState === WebSocket.OPEN) {
+        ws.send(reader.result);
+      }
+    };
+    reader.readAsArrayBuffer(audioData);
   };
 
   const simulateBufferTranscription = (audioBlob: Blob) => {};
@@ -185,6 +191,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = () => {
     }
 
     stopTimer();
+
     setRecordingState("idle");
     setSelectedMode(null);
   };
@@ -236,9 +243,9 @@ const AudioRecorder: React.FC<AudioRecorderProps> = () => {
         <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 mb-6 border border-white/20">
           <div className="text-center mb-8">
             {/* Timer */}
-            <div className="text-6xl font-mono text-white mb-4">
+            {/* <div className="text-6xl font-mono text-white mb-4">
               {formatDuration(duration)}
-            </div>
+            </div> */}
 
             {/* Status */}
             <div className="flex items-center justify-center gap-2 mb-6">
